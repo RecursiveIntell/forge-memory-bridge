@@ -14,7 +14,7 @@ use semantic_memory_forge::{
     ExportClaim, ExportEnvelopeV1, ExportEpisode, ExportRecord, EXPORT_ENVELOPE_V1_SCHEMA,
 };
 use serde::{Deserialize, Serialize};
-use stack_ids::{EnvelopeId, ScopeKey, TraceCtx};
+use stack_ids::{EnvelopeId, EpisodeId, ScopeKey, TraceCtx};
 
 use crate::batch::*;
 use crate::error::BridgeError;
@@ -25,6 +25,7 @@ use crate::error::BridgeError;
 /// format. It is kept for one migration cycle only.
 ///
 /// ## Phase status: compatibility / migration-only
+/// Removal condition: remove when all consumers have migrated to `ExportEnvelopeV3` -> `transform_envelope_v3()` -> `ProjectionImportBatchV3`
 #[deprecated(
     since = "0.1.0",
     note = "Legacy import envelope compatibility type is migration-only. Use ExportEnvelopeV3 -> transform_envelope_v3() -> ProjectionImportBatchV3."
@@ -43,6 +44,7 @@ pub struct LegacyImportEnvelopeV1 {
 /// Legacy import record (Fact or Episode).
 ///
 /// ## Phase status: compatibility / migration-only
+/// Removal condition: remove when all consumers have migrated to canonical export records
 #[deprecated(
     since = "0.1.0",
     note = "Legacy import record is migration-only. Use canonical export records instead."
@@ -64,6 +66,7 @@ pub enum LegacyImportRecord {
 /// Legacy episode metadata.
 ///
 /// ## Phase status: compatibility / migration-only
+/// Removal condition: remove when all consumers have migrated to canonical export records
 #[deprecated(
     since = "0.1.0",
     note = "Legacy episode metadata is migration-only and kept for compatibility only."
@@ -83,6 +86,7 @@ pub struct LegacyEpisodeMeta {
 /// bridge internally upgrades to the canonical format.
 ///
 /// ## Phase status: compatibility / migration-only
+/// Removal condition: remove when all consumers have migrated to `ExportEnvelopeV3` and `transform_envelope_v3()`
 #[deprecated(
     since = "0.1.0",
     note = "Legacy conversion is migration-only. Prefer ExportEnvelopeV3 and transform_envelope_v3() on the canonical path."
@@ -124,7 +128,7 @@ pub fn upgrade_legacy_envelope(
             }),
             LegacyImportRecord::Episode { document_id, meta } => {
                 ExportRecord::Episode(ExportEpisode {
-                    episode_id: None,
+                    episode_id: Some(EpisodeId::generate()),
                     document_id: document_id.clone(),
                     cause_ids: meta.cause_ids.clone(),
                     effect_type: meta.effect_type.clone(),
@@ -161,6 +165,7 @@ pub fn upgrade_legacy_envelope(
 /// Convenience function that combines upgrade + transform.
 ///
 /// ## Phase status: compatibility / migration-only
+/// Removal condition: remove when all consumers have migrated to `ExportEnvelopeV3` and `transform_envelope_v3()`
 #[deprecated(
     since = "0.1.0",
     note = "Legacy conversion is migration-only. Prefer ExportEnvelopeV3 and transform_envelope_v3() on the canonical path."

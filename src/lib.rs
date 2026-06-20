@@ -19,10 +19,14 @@ mod batch;
 mod error;
 #[allow(deprecated)]
 mod legacy;
+mod lifecycle;
 mod transform;
 
 pub use batch::*;
-pub use error::BridgeError;
+pub use error::{
+    BridgeError, BridgeImportFailureArtifact, BRIDGE_IMPORT_FAILURE_ARTIFACT_V1_SCHEMA,
+};
+pub use lifecycle::*;
 pub use transform::*;
 
 /// Compatibility-only legacy bridge helpers.
@@ -31,6 +35,9 @@ pub use transform::*;
 /// `ProjectionImportBatchV3`.
 /// V1/V2 helpers remain only for migration compatibility and should not be
 /// used for new integrations.
+///
+/// Phase status: migration-only
+/// Removal condition: remove when all consumers have migrated to `transform_envelope_v3()` + `ProjectionImportBatchV3`
 #[doc(hidden)]
 #[deprecated(
     since = "0.2.0",
@@ -44,6 +51,8 @@ pub mod compat {
     };
 }
 
+/// Phase status: migration-only
+/// Removal condition: remove when all consumers have migrated to `transform_envelope_v3()` + `ProjectionImportBatchV3`
 #[deprecated(
     since = "0.1.0",
     note = "Legacy bridge helpers are compatibility-only. Use `transform_envelope_v3()` + `ProjectionImportBatchV3`."
@@ -51,6 +60,8 @@ pub mod compat {
 #[doc(hidden)]
 #[allow(deprecated)]
 pub use compat::transform_legacy_envelope;
+/// Phase status: migration-only
+/// Removal condition: remove when all consumers have migrated to `transform_envelope_v3()` + `ProjectionImportBatchV3`
 #[deprecated(
     since = "0.1.0",
     note = "Legacy bridge helpers are compatibility-only. Use `transform_envelope_v3()` + `ProjectionImportBatchV3`."
@@ -58,6 +69,8 @@ pub use compat::transform_legacy_envelope;
 #[doc(hidden)]
 #[allow(deprecated)]
 pub use compat::upgrade_legacy_envelope;
+/// Phase status: migration-only
+/// Removal condition: remove when all consumers have migrated to `transform_envelope_v3()` + `ProjectionImportBatchV3`
 #[deprecated(
     since = "0.1.0",
     note = "Legacy bridge helpers are compatibility-only. Use `transform_envelope_v3()` + `ProjectionImportBatchV3`."
@@ -65,6 +78,8 @@ pub use compat::upgrade_legacy_envelope;
 #[doc(hidden)]
 #[allow(deprecated)]
 pub use compat::LegacyEpisodeMeta;
+/// Phase status: migration-only
+/// Removal condition: remove when all consumers have migrated to `transform_envelope_v3()` + `ProjectionImportBatchV3`
 #[deprecated(
     since = "0.1.0",
     note = "Legacy bridge helpers are compatibility-only. Use `transform_envelope_v3()` + `ProjectionImportBatchV3`."
@@ -72,6 +87,8 @@ pub use compat::LegacyEpisodeMeta;
 #[doc(hidden)]
 #[allow(deprecated)]
 pub use compat::LegacyImportEnvelopeV1;
+/// Phase status: migration-only
+/// Removal condition: remove when all consumers have migrated to `transform_envelope_v3()` + `ProjectionImportBatchV3`
 #[deprecated(
     since = "0.1.0",
     note = "Legacy bridge helpers are compatibility-only. Use `transform_envelope_v3()` + `ProjectionImportBatchV3`."

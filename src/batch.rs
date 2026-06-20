@@ -26,6 +26,9 @@ use stack_ids::{
 ///
 /// This is distinct from the source export envelope schema version. The latter
 /// is preserved in [`ProjectionImportBatchV1::export_schema_version`].
+///
+/// Phase status: migration-only
+/// Removal condition: remove when all consumers have migrated to `ProjectionImportBatchV3`
 #[deprecated(
     since = "0.2.0",
     note = "ProjectionImportBatchV1 is compatibility-only. Use ProjectionImportBatchV3 for the canonical bridge output."
@@ -47,6 +50,9 @@ pub const PROJECTION_IMPORT_BATCH_V3_SCHEMA: &str = "projection_import_batch_v3"
 ///
 /// The importing store assigns authoritative imported `recorded_at`
 /// when it commits the rows.
+///
+/// Phase status: migration-only
+/// Removal condition: remove when all consumers have migrated to `ProjectionImportBatchV3`
 #[deprecated(
     since = "0.2.0",
     note = "ProjectionImportBatchV1 is compatibility-only. Use ProjectionImportBatchV3 for the canonical bridge output."
@@ -125,6 +131,11 @@ pub struct ProjectionImportBatchV2 {
     pub records: Vec<ImportProjectionRecord>,
 }
 
+/// Canonical kernel-oriented projection import batch produced by the bridge.
+///
+/// V3 extends V2 with rich record semantics, support algebra artifacts,
+/// contradiction witnesses, retraction lineage, and v14/v15 experimental
+/// and exchange surfaces preserved verbatim from the Forge export.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ProjectionImportBatchV3 {
     /// Source envelope ID (for provenance).
@@ -173,59 +184,83 @@ pub struct ProjectionImportBatchV3 {
     /// Additive v14 intervention and control artifacts preserved verbatim from Forge.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub intervention_bundles_v14: Vec<Value>,
+    /// V14 outcome schema definitions preserved verbatim from Forge.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub outcome_schemas_v14: Vec<Value>,
+    /// V14 cohort contract artifacts preserved verbatim from Forge.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub cohort_contracts_v14: Vec<Value>,
+    /// V14 counterfactual slice artifacts preserved verbatim from Forge.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub counterfactual_slices_v14: Vec<Value>,
+    /// V14 experiment case artifacts preserved verbatim from Forge.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub experiment_cases_v14: Vec<Value>,
+    /// V14 comparability matrix artifacts preserved verbatim from Forge.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub comparability_matrices_v14: Vec<Value>,
+    /// V14 decision trace artifacts preserved verbatim from Forge.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub decision_traces_v14: Vec<Value>,
+    /// V14 refuter suite definitions preserved verbatim from Forge.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub refuter_suites_v14: Vec<Value>,
+    /// V14 refuter result artifacts preserved verbatim from Forge.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub refuter_results_v14: Vec<Value>,
+    /// V14 experiment budget artifacts preserved verbatim from Forge.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub experiment_budgets_v14: Vec<Value>,
+    /// V14 rollout decision artifacts preserved verbatim from Forge.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub rollout_decisions_v14: Vec<Value>,
+    /// V14 rollback decision artifacts preserved verbatim from Forge.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub rollback_decisions_v14: Vec<Value>,
     /// Additive v15 exchange and remote-admission artifacts preserved verbatim.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub attestation_envelopes_v15: Vec<Value>,
+    /// V15 trust root set artifacts preserved verbatim.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub trust_root_sets_v15: Vec<Value>,
+    /// V15 artifact admission policy artifacts preserved verbatim.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub artifact_admission_policies_v15: Vec<Value>,
+    /// V15 transparency receipt artifacts preserved verbatim.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub transparency_receipts_v15: Vec<Value>,
+    /// V15 attestation revocation artifacts preserved verbatim.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub attestation_revocations_v15: Vec<Value>,
+    /// V15 attestation supersession artifacts preserved verbatim.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub attestation_supersessions_v15: Vec<Value>,
+    /// V15 remote oracle lease artifacts preserved verbatim.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub remote_oracle_leases_v15: Vec<Value>,
+    /// V15 remote slice request artifacts preserved verbatim.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub remote_slice_requests_v15: Vec<Value>,
+    /// V15 remote slice result artifacts preserved verbatim.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub remote_slice_results_v15: Vec<Value>,
+    /// V15 cross-runtime replay ticket artifacts preserved verbatim.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub cross_runtime_replay_tickets_v15: Vec<Value>,
+    /// V15 dispute bundle artifacts preserved verbatim.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub dispute_bundles_v15: Vec<Value>,
+    /// V15 disclosure policy artifacts preserved verbatim.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub disclosure_policies_v15: Vec<Value>,
+    /// V15 disclosure budget artifacts preserved verbatim.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub disclosure_budgets_v15: Vec<Value>,
     /// Rich import records preserving export-time semantics for kernel compilation.
     pub records: Vec<ImportProjectionRecordV3>,
 }
 
+/// A single import record enriched with export-time semantics for kernel compilation.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ImportProjectionRecordV3 {
     pub record: ImportProjectionRecord,
@@ -481,6 +516,7 @@ pub enum ClaimState {
 }
 
 impl ClaimState {
+    /// Returns the stable snake_case wire label for this claim state.
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::Active => "active",
@@ -514,6 +550,7 @@ pub enum ProjectionFreshness {
 }
 
 impl ProjectionFreshness {
+    /// Returns the stable snake_case wire label for this freshness status.
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::Current => "current",

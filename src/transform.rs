@@ -15,7 +15,7 @@ use semantic_memory_forge::{
     ExportEnvelopeV3, ExportRecord, ExportRecordV3, EXPORT_ENVELOPE_V1_SCHEMA,
     EXPORT_ENVELOPE_V2_SCHEMA, EXPORT_ENVELOPE_V3_SCHEMA,
 };
-use stack_ids::{ClaimId, ClaimVersionId, EpisodeId, RelationVersionId, TraceCtx};
+use stack_ids::{ClaimId, ClaimVersionId, RelationVersionId, TraceCtx};
 
 /// Transform an `ExportEnvelopeV1` into a `ProjectionImportBatchV1`.
 ///
@@ -35,6 +35,9 @@ use stack_ids::{ClaimId, ClaimVersionId, EpisodeId, RelationVersionId, TraceCtx}
 /// are minted.
 ///
 /// Returns an error if the envelope is malformed or incompatible.
+///
+/// Phase status: migration-only
+/// Removal condition: remove when all consumers have migrated to `transform_envelope_v3()` and `ProjectionImportBatchV3`
 #[deprecated(
     since = "0.2.0",
     note = "transform_envelope() is compatibility-only. Use transform_envelope_v3() and ProjectionImportBatchV3."
@@ -77,6 +80,9 @@ pub fn transform_envelope(
 ///
 /// V2 preserves export-time metadata alongside the typed projection records.
 /// The bridge copies it through unchanged and still does not invent meaning.
+///
+/// Phase status: migration-only
+/// Removal condition: remove when all consumers have migrated to `transform_envelope_v3()` and `ProjectionImportBatchV3`
 #[deprecated(
     since = "0.2.0",
     note = "transform_envelope_v2() is compatibility-only. Use transform_envelope_v3() and ProjectionImportBatchV3."
@@ -291,8 +297,7 @@ fn derive_episode_bundle_v2(
     let source_receipt_digests = bundle
         .raw_receipt_handle
         .as_ref()
-        .map(|value| vec![value.clone()])
-        .unwrap_or_default();
+        .map_or_else(Vec::new, |value| vec![value.clone()]);
     Ok(Some(EpisodeBundleV1 {
         schema_version: semantic_memory_forge::EPISODE_BUNDLE_V1_SCHEMA.into(),
         bundle_id: bundle.id.to_string(),
@@ -326,8 +331,7 @@ fn derive_episode_bundle_v2(
             .export_meta
             .as_ref()
             .and_then(|meta| meta.run_id.clone())
-            .map(|run_id| vec![format!("forge_run:{run_id}")])
-            .unwrap_or_default(),
+            .map_or_else(Vec::new, |run_id| vec![format!("forge_run:{run_id}")]),
         execution_context: execution_context.clone(),
         thin_export: envelope.evidence_bundle.is_none(),
         supersedes_bundle_id: None,
@@ -490,7 +494,15 @@ fn transform_record(
         }
 
         ExportRecord::Episode(ep) => {
-            let episode_id = ep.episode_id.clone().unwrap_or_else(EpisodeId::generate);
+            let episode_id =
+                ep.episode_id
+                    .clone()
+                    .ok_or_else(|| BridgeError::MissingEpisodeIdentity {
+                        record_context: format!(
+                            "legacy import at {}",
+                            ep.experiment_id.as_deref().unwrap_or("unknown")
+                        ),
+                    })?;
 
             Ok(ImportProjectionRecord::Episode(ImportEpisodeRecord {
                 episode_id,
@@ -634,19 +646,30 @@ fn transform_record_v2(
                 },
             ))
         }
-        ExportRecord::Episode(ep) => Ok(ImportProjectionRecord::Episode(ImportEpisodeRecord {
-            episode_id: ep.episode_id.clone().unwrap_or_else(EpisodeId::generate),
-            document_id: ep.document_id.clone(),
-            cause_ids: ep.cause_ids.clone(),
-            effect_type: ep.effect_type.clone(),
-            outcome: ep.outcome.clone(),
-            confidence: ep.confidence,
-            experiment_id: ep.experiment_id.clone(),
-            source_envelope_id: envelope.envelope_id.clone(),
-            source_authority: envelope.source_authority.clone(),
-            trace_ctx: envelope.trace_ctx.clone(),
-            metadata: ep.metadata.clone(),
-        })),
+        ExportRecord::Episode(ep) => {
+            let episode_id =
+                ep.episode_id
+                    .clone()
+                    .ok_or_else(|| BridgeError::MissingEpisodeIdentity {
+                        record_context: format!(
+                            "legacy import at {}",
+                            ep.experiment_id.as_deref().unwrap_or("unknown")
+                        ),
+                    })?;
+            Ok(ImportProjectionRecord::Episode(ImportEpisodeRecord {
+                episode_id,
+                document_id: ep.document_id.clone(),
+                cause_ids: ep.cause_ids.clone(),
+                effect_type: ep.effect_type.clone(),
+                outcome: ep.outcome.clone(),
+                confidence: ep.confidence,
+                experiment_id: ep.experiment_id.clone(),
+                source_envelope_id: envelope.envelope_id.clone(),
+                source_authority: envelope.source_authority.clone(),
+                trace_ctx: envelope.trace_ctx.clone(),
+                metadata: ep.metadata.clone(),
+            }))
+        }
         ExportRecord::EntityAlias(alias) => {
             let scope = alias
                 .scope
