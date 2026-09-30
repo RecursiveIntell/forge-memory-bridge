@@ -250,3 +250,7 @@ New integrations should use `ExportEnvelopeV3`, `transform_envelope_v3()`, and
 ## License
 
 Apache-2.0. See [LICENSE](LICENSE).
+
+## Standalone source checkout
+
+This GitHub checkout retains inherited `workspace = true` dependencies without its own workspace root. A standalone clone cannot currently resolve Cargo metadata by itself. The published registry package and the integrated [Libraries workspace](https://github.com/RecursiveIntell/Libraries) are separate source surfaces; use the matching workspace for source checks, or explicitly reconcile this mirror's manifest closure before building it alone.
