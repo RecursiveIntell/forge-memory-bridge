@@ -1,5 +1,7 @@
 # forge-memory-bridge
 
+<!-- last-verified: 2026-10-25 -->
+
 Transformation layer from Forge export envelopes to `semantic-memory`
 projection import batches.
 
@@ -66,6 +68,8 @@ forge-memory-bridge = "0.1.1"
 ```
 
 ## Quick start
+
+The example below is an integration sketch rather than a standalone program: it assumes an existing `ExportEnvelopeV3` and leaves envelope construction and importing-store setup to your application.
 
 ```rust
 use forge_memory_bridge::{transform_envelope_v3, ProjectionImportBatchV3};
